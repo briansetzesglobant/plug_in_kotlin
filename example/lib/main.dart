@@ -4,6 +4,9 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:plug_in_kotlin/plug_in_kotlin.dart';
 
+import 'utils/strings.dart';
+import 'utils/text_styles.dart';
+
 void main() {
   runApp(MyApp());
 }
@@ -14,43 +17,140 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
+  String _platformVersion = Strings.valueUnknown;
+  bool _initializeLocatorPlugin = false;
+  bool _checkPermissions = false;
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
     String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
     try {
       platformVersion = await PlugInKotlin.platformVersion;
     } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
+      platformVersion = Strings.failedPlatformVersion;
     }
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
     if (!mounted) return;
-
     setState(() {
       _platformVersion = platformVersion;
     });
   }
 
+  Future<void> initializeLocatorPlugin() async {
+    bool _initialize = false;
+    try {
+      _initialize = await PlugInKotlin.initializeLocatorPlugin;
+    } on PlatformException {
+      print(Strings.failedInitializeLocatorPlugin);
+    }
+    _initializeLocatorPlugin = _initialize;
+  }
+
+  Future<void> checkPermissions() async {
+    bool _check = false;
+    try {
+      _check = await PlugInKotlin.checkPermissions;
+    } on PlatformException {
+      print(Strings.failedCheckPermissions);
+    }
+    _checkPermissions = !_check;
+  }
+
+  Future<void> requestPermissions() async {
+    try {
+      await PlugInKotlin.requestPermissions;
+    } on PlatformException {
+      print(Strings.failedRequestPermissions);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.brown,
+      ),
       home: Scaffold(
+        backgroundColor: Colors.teal,
         appBar: AppBar(
-          title: const Text('Plugin example app'),
+          title: const Text(Strings.title),
         ),
         body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Column(
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        initPlatformState();
+                      });
+                    },
+                    child: Text(
+                      Strings.textPlatformVersion,
+                      style: TextStyles.styleButton,
+                    ),
+                  ),
+                  Text(
+                    _platformVersion,
+                    style: TextStyles.styleText,
+                  ),
+                ],
+              ),
+              Column(
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        initializeLocatorPlugin();
+                      });
+                    },
+                    child: Text(
+                      Strings.textInitializeLocatorPlugin,
+                      style: TextStyles.styleButton,
+                    ),
+                  ),
+                  Text(
+                    '${_initializeLocatorPlugin ? Strings.textInitializeLocatorPluginInitialized : Strings.textInitializeLocatorPluginNotInitialized}',
+                    style: TextStyles.styleText,
+                  ),
+                ],
+              ),
+              Column(
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        checkPermissions();
+                      });
+                    },
+                    child: Text(
+                      Strings.textCheckPermissions,
+                      style: TextStyles.styleButton,
+                    ),
+                  ),
+                  Text(
+                    '${_checkPermissions ? Strings.textCheckPermissionsGranted : Strings.textCheckPermissionsNotGranted}',
+                    style: TextStyles.styleText,
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: () {
+                  requestPermissions();
+                },
+                child: Text(
+                  Strings.textRequestPermissions,
+                  style: TextStyles.styleButton,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
