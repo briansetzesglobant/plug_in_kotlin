@@ -3,6 +3,12 @@ import 'package:flutter/services.dart';
 import 'utils/strings.dart';
 
 class PlugInKotlin {
+  static const EventChannel _locationEventChannel =
+      const EventChannel(Strings.location_event_channel);
+
+  static Stream<dynamic> get locationEventStream =>
+      _locationEventChannel.receiveBroadcastStream();
+
   static const MethodChannel _channel = const MethodChannel(Strings.plug_in);
 
   static Future<String> get platformVersion async =>
@@ -19,4 +25,9 @@ class PlugInKotlin {
     return;
   }
 
+  static Future<Map<dynamic, dynamic>> get returnLastCoordinates async =>
+      await _channel.invokeMethod(Strings.returnLastCoordinates);
+
+  static Future<bool> get stopLocatorPlugin async =>
+      await _channel.invokeMethod(Strings.stopLocatorPlugin);
 }

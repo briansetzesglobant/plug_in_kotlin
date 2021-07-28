@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:plug_in_kotlin/plug_in_kotlin.dart';
 
+import 'coordinates.dart';
 import 'utils/strings.dart';
 import 'utils/text_styles.dart';
 
@@ -20,10 +21,12 @@ class _MyAppState extends State<MyApp> {
   String _platformVersion = Strings.valueUnknown;
   bool _initializeLocatorPlugin = false;
   bool _checkPermissions = false;
+  var _coordinates;
 
   @override
   void initState() {
     super.initState();
+    _coordinates = Coordinates();
   }
 
   Future<void> initPlatformState() async {
@@ -40,23 +43,23 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initializeLocatorPlugin() async {
-    bool _initialize = false;
+    bool initialize = false;
     try {
-      _initialize = await PlugInKotlin.initializeLocatorPlugin;
+      initialize = await PlugInKotlin.initializeLocatorPlugin;
     } on PlatformException {
       print(Strings.failedInitializeLocatorPlugin);
     }
-    _initializeLocatorPlugin = _initialize;
+    _initializeLocatorPlugin = initialize;
   }
 
   Future<void> checkPermissions() async {
-    bool _check = false;
+    bool check = false;
     try {
-      _check = await PlugInKotlin.checkPermissions;
+      check = await PlugInKotlin.checkPermissions;
     } on PlatformException {
       print(Strings.failedCheckPermissions);
     }
-    _checkPermissions = !_check;
+    _checkPermissions = !check;
   }
 
   Future<void> requestPermissions() async {
@@ -64,6 +67,22 @@ class _MyAppState extends State<MyApp> {
       await PlugInKotlin.requestPermissions;
     } on PlatformException {
       print(Strings.failedRequestPermissions);
+    }
+  }
+
+  Future<void> returnLastCoordinates() async {
+    try {
+      await PlugInKotlin.returnLastCoordinates;
+    } on PlatformException {
+      print(Strings.failedReturnLastCoordinates);
+    }
+  }
+
+  Future<void> stopLocatorPlugin() async {
+    try {
+      await PlugInKotlin.stopLocatorPlugin;
+    } on PlatformException {
+      print(Strings.failedStopLocatorPlugin);
     }
   }
 
@@ -146,6 +165,48 @@ class _MyAppState extends State<MyApp> {
                 },
                 child: Text(
                   Strings.textRequestPermissions,
+                  style: TextStyles.styleButton,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  returnLastCoordinates();
+                },
+                child: Column(
+                  children: [
+                    Text(
+                      Strings.textReturnLastCoordinates,
+                      style: TextStyles.styleButton,
+                    ),
+                    StreamBuilder<dynamic>(
+                      stream: PlugInKotlin.locationEventStream,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          _coordinates.setCoordinates(snapshot.data);
+                        }
+                        return Column(
+                          children: [
+                            Text(
+                              _coordinates.latitude,
+                              style: TextStyles.styleText,
+                            ),
+                            Text(
+                              _coordinates.longitude,
+                              style: TextStyles.styleText,
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  stopLocatorPlugin();
+                },
+                child: Text(
+                  Strings.textStopLocatorPlugin,
                   style: TextStyles.styleButton,
                 ),
               ),
